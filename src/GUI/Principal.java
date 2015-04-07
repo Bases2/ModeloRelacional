@@ -88,7 +88,7 @@ public class Principal extends JFrame {
         public VentanaInterna(String title, Relacion tab) {
             super(title);
             Object[][] data = {};
-            String[] col = {"Nombre", "Apellido"};
+            String[] col = {"Nombre"};//, "Apellido"};
             tabla = new JTable();
             modelo = new DefaultTableModel(data, col);
             tabla.setModel(modelo);
@@ -110,8 +110,9 @@ public class Principal extends JFrame {
             LinkedList<Atributo> atribs = tab.getAtributos();
             for (Atributo atr : atribs) {
                 modelo.insertRow(cant, new Object[]{});
-                modelo.setValueAt(atr.getNombre(), cant, 0);
-                modelo.setValueAt(atr.getLlaves(), cant++, 1);
+                modelo.setValueAt(atr.getNombre() + atr.getLlaves(), cant++, 0);
+                //modelo.setValueAt(, cant++, 1);
+                
             }
 
         }
@@ -243,8 +244,10 @@ public class Principal extends JFrame {
             return;
         }
         String[] pp = Script.split("CREATE TABLE");
+        int k = 0;
         for (String s : pp) {
-            if (s.isEmpty()) {
+            if (k == 0) {
+                k++;
                 continue;
             }
 //            System.out.println(s);
@@ -253,7 +256,6 @@ public class Principal extends JFrame {
 //            System.out.println(" s   es lo siquiente  :: " + s);
 //            System.out.println("  index es   ::  " + s.indexOf("\n"));
             String nombreTabla = s.substring(0,s.indexOf("(")).trim();
-            System.out.println(nombreTabla);
             String tabla2 = s.substring(s.indexOf("(") + 1, s.lastIndexOf(")")).trim();
 //            tabla2 = tabla2.substring(0, tabla2.indexOf(")")).trim();
             String[] atributos = tabla2.split(",");
@@ -276,6 +278,7 @@ public class Principal extends JFrame {
                         crearven = true;
                     }
                     atr = atr.replaceAll("KEY", " ");
+//                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
                     if (atr.contains("FOREIGN")) {
                         atr = atr.replaceAll("FOREIGN", " ").trim();
                         String reE = atr.split("REFERENCES")[1];
@@ -294,11 +297,22 @@ public class Principal extends JFrame {
                         puntos.add(0);
                         puntos.add(0);
                         
+//                        for (Atributo aa1 : aa) {
+//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+//                                aa1.addLlaves("FK");
+//                                break;
+//                            }
+//                        }
                         
                         continue;
                     }
                     if (atr.contains("PRIMARY")) {
-                        
+//                        for (Atributo aa1 : aa) {
+//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+//                                aa1.addLlaves("PK");
+//                                break;
+//                            }
+//                        }
                         continue;
                     }
                 }
@@ -330,7 +344,6 @@ public class Principal extends JFrame {
             }
             
             
-            
         }
         Repintar();
     }
@@ -345,12 +358,12 @@ public class Principal extends JFrame {
             y2 = puntos.get(i+3);
             gra.drawLine(x1, y1, x2, y2);
             if (x1 > x2) {
-                gra.drawString("n", x2+6, y2);
-                gra.drawString("1", x1-9, y1);
+                gra.drawString("1", x2+6, y2);
+                gra.drawString("n", x1-9, y1);
             }
             else{
-                gra.drawString("n", x2-9, y2);
-                gra.drawString("1", x1+6, y1);
+                gra.drawString("1", x2-9, y2);
+                gra.drawString("n", x1+6, y1);
             }
         }
         int i = 0;
@@ -367,13 +380,13 @@ public class Principal extends JFrame {
 
             if (x1 > x2) {
                 x2 += v2.getWidth();
-                gra.drawString("n", x2+6, y2);
-                gra.drawString("1", x1-9, y1);
+                gra.drawString("1", x2+6, y2);
+                gra.drawString("n", x1-9, y1);
             }
             else{
                 x1 += v1.getWidth();
-                gra.drawString("n", x2-9, y2);
-                gra.drawString("1", x1+6, y1);
+                gra.drawString("1", x2-9, y2);
+                gra.drawString("n", x1+6, y1);
             }
 
             gra.drawLine(x1, y1, x2, y2);
