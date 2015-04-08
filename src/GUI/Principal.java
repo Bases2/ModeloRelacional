@@ -83,12 +83,17 @@ public class Principal extends JFrame {
         private DefaultTableModel modelo;
         private Relacion tab;
         private int cant = 0;
-        
+        private int Rn = 0;
+        private int R1 = 0;
+        private LinkedList<Integer> puntosRn = new LinkedList<>();
+        private LinkedList<Integer> puntosR1 = new LinkedList<>();
 
+        
+        
         public VentanaInterna(String title, Relacion tab) {
             super(title);
             Object[][] data = {};
-            String[] col = {"Nombre", "Apellido"};
+            String[] col = {"Nombre"};//, "Apellido"};
             tabla = new JTable();
             modelo = new DefaultTableModel(data, col);
             tabla.setModel(modelo);
@@ -110,8 +115,9 @@ public class Principal extends JFrame {
             LinkedList<Atributo> atribs = tab.getAtributos();
             for (Atributo atr : atribs) {
                 modelo.insertRow(cant, new Object[]{});
-                modelo.setValueAt(atr.getNombre(), cant, 0);
-                modelo.setValueAt(atr.getLlaves(), cant++, 1);
+                modelo.setValueAt(atr.getNombre() + atr.getLlaves(), cant++, 0);
+                //modelo.setValueAt(, cant++, 1);
+                
             }
 
         }
@@ -155,6 +161,69 @@ public class Principal extends JFrame {
 
         }
 
+        public int getPuntosR1(int index) {
+            return puntosR1.get(index);
+        }
+
+        public int getPuntosRn(int index) {
+            return puntosRn.get(index);
+        }
+        
+        
+        
+        public int getR1() {
+            return R1;
+        }
+
+        public int getRn() {
+            return Rn;
+        }
+        
+        public void addRn(){
+            Rn++;
+            puntosRn.add(0);
+        }
+        
+        public void addR1(){
+            R1++;
+            puntosR1.add(0);
+        }
+
+        public void addRn(int n){
+            Rn += n;
+            for (int i = 0; i < n; i++) {
+                puntosRn.add(0);
+            }
+        }
+        
+        public void addR1(int n){
+            R1 += n;
+            for (int i = 0; i < n; i++) {
+                puntosR1.add(0);
+            }
+        }
+        
+        public void removeRn(){
+            Rn--;
+            puntosRn.removeLast();
+        }
+        
+        public void removeR1(){
+            R1--;
+            puntosR1.removeLast();
+        }
+        
+        public void removeRn(int n){
+            Rn -= n;
+            puntosRn.remove(n);
+        }
+        
+        public void removeR1(int n){
+            R1 -= n;
+            puntosR1.remove(n);
+        }
+        
+        
     }
 
     public Principal(String title) throws HeadlessException {
@@ -229,10 +298,16 @@ public class Principal extends JFrame {
             BufferedReader bf = new BufferedReader(fr);
             String s;
             while ((s = bf.readLine()) != null) {
+                if (s.contains("--")) {
+                    s = s.substring(0, s.indexOf("--"));
+                }
                 Script += s.trim() + " ";
             }
 //            direccionScript = new File(direccionScript.toString().substring(0, direccionScript.toString().lastIndexOf("\\")));
             Script = Script.toUpperCase();
+            while (Script.contains("/*")) {
+                Script = Script.substring(0, Script.indexOf("/*")) + (Script.contains("*/") ? Script.substring(Script.indexOf("*/") + 2, Script.length()) : "");
+            }
             crearTabla();
         }
     }
@@ -243,17 +318,20 @@ public class Principal extends JFrame {
             return;
         }
         String[] pp = Script.split("CREATE TABLE");
+        boolean primera =true;
         for (String s : pp) {
-            if (s.isEmpty()) {
+            if (primera) {
+                primera = false;
                 continue;
             }
+            s = s.split(";")[0];
+            s = s.split("INSERT")[0];
 //            System.out.println(s);
 //            s = s.replace("(", "\n");
 //            s = s.replace(")", "\n");
 //            System.out.println(" s   es lo siquiente  :: " + s);
 //            System.out.println("  index es   ::  " + s.indexOf("\n"));
             String nombreTabla = s.substring(0,s.indexOf("(")).trim();
-            System.out.println(nombreTabla);
             String tabla2 = s.substring(s.indexOf("(") + 1, s.lastIndexOf(")")).trim();
 //            tabla2 = tabla2.substring(0, tabla2.indexOf(")")).trim();
             String[] atributos = tabla2.split(",");
@@ -276,6 +354,7 @@ public class Principal extends JFrame {
                         crearven = true;
                     }
                     atr = atr.replaceAll("KEY", " ");
+//                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
                     if (atr.contains("FOREIGN")) {
                         atr = atr.replaceAll("FOREIGN", " ").trim();
                         String reE = atr.split("REFERENCES")[1];
@@ -294,11 +373,22 @@ public class Principal extends JFrame {
                         puntos.add(0);
                         puntos.add(0);
                         
+//                        for (Atributo aa1 : aa) {
+//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+//                                aa1.addLlaves("FK");
+//                                break;
+//                            }
+//                        }
                         
                         continue;
                     }
                     if (atr.contains("PRIMARY")) {
-                        
+//                        for (Atributo aa1 : aa) {
+//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+//                                aa1.addLlaves("PK");
+//                                break;
+//                            }
+//                        }
                         continue;
                     }
                 }
@@ -328,7 +418,6 @@ public class Principal extends JFrame {
                 ven.setLocation(x, y);
                 crearven = true;
             }
-            
             
             
         }
@@ -383,6 +472,6 @@ public class Principal extends JFrame {
             puntos.set(i++, y2);
 
         }
-        tablas.getFirst().componentResized(null);
+//        tablas.getFirst().componentResized(null);
     }
 }
