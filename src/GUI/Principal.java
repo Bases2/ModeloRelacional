@@ -36,6 +36,7 @@ public class Principal extends JFrame {
     File direccionScript;
     LinkedList<VentanaInterna> tablas = new LinkedList<>();
     LinkedList<RelacionRelacionada> relacionesEntreRelaciones = new LinkedList<>();
+    int numeroTablas = 0;
     LinkedList<Integer> puntos = new LinkedList<>();
 
     class PanelEscritorio extends JDesktopPane {
@@ -301,7 +302,14 @@ public class Principal extends JFrame {
                 if (s.contains("--")) {
                     s = s.substring(0, s.indexOf("--"));
                 }
+                
+                if (s.contains(",")) {
+                    s = s.split(",")[0] + ",";
+                }
+                
                 Script += s.trim() + " ";
+                
+                
             }
 //            direccionScript = new File(direccionScript.toString().substring(0, direccionScript.toString().lastIndexOf("\\")));
             Script = Script.toUpperCase();
@@ -326,6 +334,7 @@ public class Principal extends JFrame {
             }
             s = s.split(";")[0];
             s = s.split("INSERT")[0];
+            s = s.split("VALUES")[0];
 //            System.out.println(s);
 //            s = s.replace("(", "\n");
 //            s = s.replace(")", "\n");
@@ -333,6 +342,8 @@ public class Principal extends JFrame {
 //            System.out.println("  index es   ::  " + s.indexOf("\n"));
             String nombreTabla = s.substring(0,s.indexOf("(")).trim();
             String tabla2 = s.substring(s.indexOf("(") + 1, s.lastIndexOf(")")).trim();
+            
+            
 //            tabla2 = tabla2.substring(0, tabla2.indexOf(")")).trim();
             String[] atributos = tabla2.split(",");
             Relacion rela = new Relacion();
@@ -347,11 +358,12 @@ public class Principal extends JFrame {
                         remove(panelPrincipal);
                         add(ven);
                         add(panelPrincipal);
-
-                        int x =30; 
+                        
+                        int x = (numeroTablas != 0) ? (80*numeroTablas) : 20; 
                         int y = 30;
                         ven.setLocation(x, y);
                         crearven = true;
+                        numeroTablas++;
                     }
                     atr = atr.replaceAll("KEY", " ");
 //                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
