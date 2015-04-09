@@ -419,7 +419,6 @@ public class Principal extends JFrame {
                 crearven = true;
             }
             
-            
         }
         Repintar();
     }
@@ -434,12 +433,12 @@ public class Principal extends JFrame {
             y2 = puntos.get(i+3);
             gra.drawLine(x1, y1, x2, y2);
             if (x1 > x2) {
-                gra.drawString("n", x2+6, y2);
-                gra.drawString("1", x1-9, y1);
+                gra.drawString("1", x2+6, y2);
+                gra.drawString("n", x1-9, y1);
             }
             else{
-                gra.drawString("n", x2-9, y2);
-                gra.drawString("1", x1+6, y1);
+                gra.drawString("1", x2-9, y2);
+                gra.drawString("n", x1+6, y1);
             }
         }
         int i = 0;
@@ -456,13 +455,13 @@ public class Principal extends JFrame {
 
             if (x1 > x2) {
                 x2 += v2.getWidth();
-                gra.drawString("n", x2+6, y2);
-                gra.drawString("1", x1-9, y1);
+                gra.drawString("1", x2+6, y2);
+                gra.drawString("n", x1-9, y1);
             }
             else{
                 x1 += v1.getWidth();
-                gra.drawString("n", x2-9, y2);
-                gra.drawString("1", x1+6, y1);
+                gra.drawString("1", x2-9, y2);
+                gra.drawString("n", x1+6, y1);
             }
 
             gra.drawLine(x1, y1, x2, y2);
