@@ -21,6 +21,7 @@ public class Atributo {
     public Atributo(String Nombre, String Tipo) {
         this.Nombre = Nombre;
         this.Tipo = Tipo;
+        this.Llaves = "";
     }
         
 
