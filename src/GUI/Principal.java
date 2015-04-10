@@ -116,11 +116,23 @@ public class Principal extends JFrame {
             LinkedList<Atributo> atribs = tab.getAtributos();
             for (Atributo atr : atribs) {
                 modelo.insertRow(cant, new Object[]{});
-                modelo.setValueAt(atr.getNombre() + atr.getLlaves(), cant++, 0);
+                modelo.setValueAt(atr.getNombre()+ " " + atr.getLlaves() , cant++, 0);
                 //modelo.setValueAt(, cant++, 1);
                 
             }
 
+        }
+        
+        public void RefrescarTabla(){
+            vaciar();
+            LinkedList<Atributo> atribs = tab.getAtributos();
+            cant = 0;
+            for (Atributo atr : atribs) {
+                modelo.insertRow(cant, new Object[]{});
+                modelo.setValueAt(atr.getNombre()+ "  " + atr.getLlaves() , cant++, 0);
+                //modelo.setValueAt(, i++, 1);
+                
+            }
         }
 
         public void setTab(Relacion tab) {
@@ -299,16 +311,23 @@ public class Principal extends JFrame {
             BufferedReader bf = new BufferedReader(fr);
             String s;
             while ((s = bf.readLine()) != null) {
+                s = s.toUpperCase();
                 if (s.contains("--")) {
                     s = s.substring(0, s.indexOf("--"));
                 }
                 
                 if (s.contains(",")) {
+                    if (s.contains("PRIMARY")) {
+                        s = s.substring(0, s.lastIndexOf(","));
+                        if (s.contains(",")) {
+                            s = s.replaceAll(",", "#");
+                        }
+                        s += ",";
+                    }
+                    else
                     s = s.split(",")[0] + ",";
                 }
-                
                 Script += s.trim() + " ";
-                
                 
             }
 //            direccionScript = new File(direccionScript.toString().substring(0, direccionScript.toString().lastIndexOf("\\")));
@@ -384,27 +403,37 @@ public class Principal extends JFrame {
                         puntos.add(0);
                         puntos.add(0);
                         puntos.add(0);
-                        
-//                        for (Atributo aa1 : aa) {
-//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
-//                                aa1.addLlaves("FK");
-//                                break;
-//                            }
-//                        }
-                        
+                        String atributo = atr.split("REFERENCES")[0];
+                        atributo = atributo.substring(atributo.indexOf("(") + 1, atributo.indexOf(")")).trim();
+                        LinkedList<Atributo> atrs = tablas.getLast().tab.getAtributos();
+                        for (Atributo aa1 : atrs) {
+                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+                                aa1.addLlaves("(FK)");
+                                
+                                break;
+                            }
+                        }
+                        tablas.getLast().RefrescarTabla();
                         continue;
                     }
                     if (atr.contains("PRIMARY")) {
-//                        for (Atributo aa1 : aa) {
-//                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
-//                                aa1.addLlaves("PK");
-//                                break;
-//                            }
-//                        }
+                        atr = atr.substring(atr.indexOf("(") + 1, atr.indexOf(")")).trim();
+                        LinkedList<Atributo> atrs = tablas.getLast().tab.getAtributos();
+                        String[] aux = atr.split("#");
+                        for (String atr1 : aux) {
+                            for (Atributo aa1 : atrs) {
+                                if (aa1.getNombre().compareToIgnoreCase(atr1.trim()) == 0) {
+                                    aa1.addLlaves("(PK)");
+
+                                    break;
+                                }
+                            }
+                        }
+                        tablas.getLast().RefrescarTabla();
                         continue;
                     }
                 }
-                String nombre = "";
+                String nombre;
                 String tipo = "";
                 atr = atr.trim();
                 if (atr.contains(" ")) {
