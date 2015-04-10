@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +32,7 @@ public class Principal extends JFrame {
     JMenuBar menu;
     JMenu menuArchivo, menuEditar;
     JMenuItem menuArchivoImportar, menuArchivoExportar, menuArchivoNuevaVentana, menuArchivoSalir;
+    JMenuItem menuEditarLimpiar;
     Graphics gra;
     String Script;
     File direccionScript;
@@ -286,6 +288,29 @@ public class Principal extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
+            }
+        });
+        menuEditar = new JMenu("Editar");
+        menu.add(menuEditar);
+        menuEditarLimpiar = new JMenuItem("Limpiar");
+        menuEditar.add(menuEditarLimpiar);
+        menuEditarLimpiar.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Script = "";
+                for (VentanaInterna tabla : tablas) {
+                    try {
+                        tabla.setClosed(true);
+                    } catch (PropertyVetoException ex) {
+                        Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                tablas = new LinkedList<>();
+                relacionesEntreRelaciones = new LinkedList<>();
+                puntos = new LinkedList<>();
+                numeroTablas = 0;
+                panelPrincipal.repaint();
             }
         });
 
