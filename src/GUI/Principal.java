@@ -378,7 +378,7 @@ public class Principal extends JFrame {
                 
                 if (s.contains(",")) {
                     if (s.contains("PRIMARY") ){//|| s.contains("ALTER TABLE")) {
-                        s = s.substring(0, s.lastIndexOf(","));
+                        s = s.substring(s.lastIndexOf(",")).indexOf(")") > 0 ? s : s.substring(0, s.lastIndexOf(","));
                         if (s.contains(",")) {
                             s = s.replaceAll(",", "#");
                         }
@@ -388,7 +388,7 @@ public class Principal extends JFrame {
                         s = s.split(",")[0] + ",";
                     }*/
                 }
-                Script += s.trim() + " ";
+                Script += s.trim() + " \n";
                 
             }
 //            direccionScript = new File(direccionScript.toString().substring(0, direccionScript.toString().lastIndexOf("\\")));
@@ -396,6 +396,7 @@ public class Principal extends JFrame {
             while (Script.contains("/*")) {
                 Script = Script.substring(0, Script.indexOf("/*")) + (Script.contains("*/") ? Script.substring(Script.indexOf("*/") + 2, Script.length()) : "");
             }
+            System.out.println(Script);
             crearTabla();
         }
     }
@@ -491,7 +492,7 @@ public class Principal extends JFrame {
         Repintar();
     }
     
-    public boolean relacionar(String atr, VentanaInterna tabla){
+    boolean relacionar(String atr, VentanaInterna tabla){
         atr = atr.replaceAll("KEY", " ");
 //                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
         if (atr.contains("FOREIGN")) {
@@ -537,7 +538,7 @@ public class Principal extends JFrame {
         return false;
     }
 
-    public VentanaInterna buscarTab (String reE){
+    VentanaInterna buscarTab (String reE){
         for (VentanaInterna r : tablas) {
                 if (r.getTitle().compareToIgnoreCase(reE) == 0) {
                     return r;
