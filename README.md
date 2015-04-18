@@ -1,2 +1,2 @@
 # ModeloRelacional
-Carga un script y crea el modelo relacional en base a ese script
+Carga un script SQL y crea el modelo relacional en base a ese script
