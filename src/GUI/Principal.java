@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,6 +35,7 @@ public class Principal extends JFrame {
     JMenu menuArchivo, menuEditar;
     JMenuItem menuArchivoImportar, menuArchivoExportar, menuArchivoNuevaVentana, menuArchivoSalir;
     JMenuItem menuEditarLimpiar;
+    JMenuItem clicmenuAgregarTabla;
     Graphics gra;
     String Script;
     File direccionScript;
@@ -40,6 +43,7 @@ public class Principal extends JFrame {
     LinkedList<RelacionRelacionada> relacionesEntreRelaciones = new LinkedList<>();
     int numeroTablas = 0;
     LinkedList<Integer> puntos = new LinkedList<>();
+    JPopupMenu clicmenu;
 
     class PanelEscritorio extends JDesktopPane {
 
@@ -122,6 +126,7 @@ public class Principal extends JFrame {
                 //modelo.setValueAt(, cant++, 1);
                 
             }
+//            modelo.setValueAt( " " , cant++, 0);
 
         }
         
@@ -135,6 +140,7 @@ public class Principal extends JFrame {
                 //modelo.setValueAt(, i++, 1);
                 
             }
+//            modelo.setValueAt( " " , cant++, 0);
         }
 
         public void setTab(Relacion tab) {
@@ -298,6 +304,9 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (JOptionPane.showConfirmDialog(rootPane, "¿seguro?") != 0) {
+                    return;
+                }
                 Script = "";
                 for (VentanaInterna tabla : tablas) {
                     try {
@@ -316,8 +325,34 @@ public class Principal extends JFrame {
 
         panelPrincipal = new PanelEscritorio();
         add(panelPrincipal);
-        panelPrincipal.repaint();
+        
+        clicmenu = new JPopupMenu();
+        panelPrincipal.add(clicmenu);
+        
+        clicmenuAgregarTabla =new JMenuItem("Nueva tabla");
+        clicmenu.add(clicmenuAgregarTabla);
+        
+        clicmenuAgregarTabla.addActionListener(new ActionListener() {
 
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                                
+            }
+        });
+        
+        panelPrincipal.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.isMetaDown() && !e.isPopupTrigger()) {
+                    clicmenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+            
+});
+        
+        panelPrincipal.repaint();
+        
         setSize(900, 600);
         setVisible(true);
         setLocationRelativeTo(null);
@@ -342,15 +377,16 @@ public class Principal extends JFrame {
                 }
                 
                 if (s.contains(",")) {
-                    if (s.contains("PRIMARY")) {
+                    if (s.contains("PRIMARY") ){//|| s.contains("ALTER TABLE")) {
                         s = s.substring(0, s.lastIndexOf(","));
                         if (s.contains(",")) {
                             s = s.replaceAll(",", "#");
                         }
                         s += ",";
                     }
-                    else
-                    s = s.split(",")[0] + ",";
+                    /*else{
+                        s = s.split(",")[0] + ",";
+                    }*/
                 }
                 Script += s.trim() + " ";
                 
@@ -409,54 +445,10 @@ public class Principal extends JFrame {
                         crearven = true;
                         numeroTablas++;
                     }
-                    atr = atr.replaceAll("KEY", " ");
-//                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
-                    if (atr.contains("FOREIGN")) {
-                        atr = atr.replaceAll("FOREIGN", " ").trim();
-                        String reE = atr.split("REFERENCES")[1];
-                        reE = reE.substring(0, reE.indexOf("(")).trim();
-                        VentanaInterna reExte = null;
-                        for (VentanaInterna r : tablas) {
-                            if (r.getTitle().compareToIgnoreCase(reE) == 0) {
-                                reExte = r;
-                                break;
-                            }
-                        }
-                        RelacionRelacionada ra = new RelacionRelacionada(tablas.getLast(),reExte);
-                        relacionesEntreRelaciones.add(ra);
-                        puntos.add(0);
-                        puntos.add(0);
-                        puntos.add(0);
-                        puntos.add(0);
-                        String atributo = atr.split("REFERENCES")[0];
-                        atributo = atributo.substring(atributo.indexOf("(") + 1, atributo.indexOf(")")).trim();
-                        LinkedList<Atributo> atrs = tablas.getLast().tab.getAtributos();
-                        for (Atributo aa1 : atrs) {
-                            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
-                                aa1.addLlaves("(FK)");
-                                
-                                break;
-                            }
-                        }
-                        tablas.getLast().RefrescarTabla();
+                    if (relacionar(atr, tablas.getLast())) {
                         continue;
                     }
-                    if (atr.contains("PRIMARY")) {
-                        atr = atr.substring(atr.indexOf("(") + 1, atr.indexOf(")")).trim();
-                        LinkedList<Atributo> atrs = tablas.getLast().tab.getAtributos();
-                        String[] aux = atr.split("#");
-                        for (String atr1 : aux) {
-                            for (Atributo aa1 : atrs) {
-                                if (aa1.getNombre().compareToIgnoreCase(atr1.trim()) == 0) {
-                                    aa1.addLlaves("(PK)");
-
-                                    break;
-                                }
-                            }
-                        }
-                        tablas.getLast().RefrescarTabla();
-                        continue;
-                    }
+                    
                 }
                 String nombre;
                 String tipo = "";
@@ -486,9 +478,75 @@ public class Principal extends JFrame {
             }
             
         }
+        
+        String[] constr = Script.split("ALTER TABLE");
+        for (int i = 1; i < constr.length; i++) {
+            String aux = constr[i].split(";")[0];
+            System.out.println(aux);
+            String[] aux2 = aux.split("ADD");
+            VentanaInterna v_aux = buscarTab(aux2[0].trim());
+            relacionar(aux2[1], v_aux);
+        }
+        
         Repintar();
     }
+    
+    public boolean relacionar(String atr, VentanaInterna tabla){
+        atr = atr.replaceAll("KEY", " ");
+//                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
+        if (atr.contains("FOREIGN")) {
+            atr = atr.replaceAll("FOREIGN", " ").trim();
+            String reE = atr.split("REFERENCES")[1];
+            reE = reE.substring(0, reE.indexOf("(")).trim();
+            VentanaInterna reExte = buscarTab(reE);
+            RelacionRelacionada ra = new RelacionRelacionada(tabla,reExte);
+            relacionesEntreRelaciones.add(ra);
+            puntos.add(0);
+            puntos.add(0);
+            puntos.add(0);
+            puntos.add(0);
+            String atributo = atr.split("REFERENCES")[0];
+            atributo = atributo.substring(atributo.indexOf("(") + 1, atributo.indexOf(")")).trim();
+            LinkedList<Atributo> atrs = tabla.tab.getAtributos();
+            for (Atributo aa1 : atrs) {
+                if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+                    aa1.addLlaves("(FK)");
 
+                    break;
+                }
+            }
+            tabla.RefrescarTabla();
+            return true;
+        }
+        if (atr.contains("PRIMARY")) {
+            atr = atr.substring(atr.indexOf("(") + 1, atr.indexOf(")")).trim();
+            LinkedList<Atributo> atrs = tabla.tab.getAtributos();
+            String[] aux = atr.split("#");
+            for (String atr1 : aux) {
+                for (Atributo aa1 : atrs) {
+                    if (aa1.getNombre().compareToIgnoreCase(atr1.trim()) == 0) {
+                        aa1.addLlaves("(PK)");
+
+                        break;
+                    }
+                }
+            }
+            tabla.RefrescarTabla();
+            return true;
+        }
+        return false;
+    }
+
+    public VentanaInterna buscarTab (String reE){
+        for (VentanaInterna r : tablas) {
+                if (r.getTitle().compareToIgnoreCase(reE) == 0) {
+                    return r;
+                }
+            }
+        return null;
+    }
+    
+    
     public void Repintar() {
         gra.setColor(Color.lightGray);
         for (int i = 0; i < puntos.size(); i+=4) {
