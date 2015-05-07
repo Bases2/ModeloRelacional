@@ -9,13 +9,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.logging.Level;
@@ -44,6 +48,7 @@ public class Principal extends JFrame {
     int numeroTablas = 0;
     LinkedList<Integer> puntos = new LinkedList<>();
     JPopupMenu clicmenu;
+    int xNV = 10, yNV = 30;
 
     class PanelEscritorio extends JDesktopPane {
 
@@ -60,10 +65,14 @@ public class Principal extends JFrame {
     class RelacionRelacionada {
         VentanaInterna relacion1;
         VentanaInterna relacion2;
+        String campo1;
+        String campo2;
 
-        public RelacionRelacionada(VentanaInterna relacion1, VentanaInterna relacion2) {
+        public RelacionRelacionada(VentanaInterna relacion1, String campo1, VentanaInterna relacion2, String campo2) {
             this.relacion1 = relacion1;
             this.relacion2 = relacion2;
+            this.campo1 = campo1;
+            this.campo2 = campo2;
         }
 
         public VentanaInterna getRelacion1() {
@@ -84,7 +93,7 @@ public class Principal extends JFrame {
     }
 
     
-    class VentanaInterna extends JInternalFrame implements ComponentListener {
+    class VentanaInterna extends JInternalFrame implements ComponentListener, KeyListener {
 
         private JTable tabla;
         private DefaultTableModel modelo;
@@ -106,10 +115,13 @@ public class Principal extends JFrame {
             tabla.setModel(modelo);
             add(tabla);
             addComponentListener(this);
+//            addKeyListener(this);
             setVisible(true);
             setResizable(true);
 //            tabla.set
 
+            tabla.addKeyListener(this);
+            
             this.tab = tab;
             ver();
             
@@ -126,21 +138,29 @@ public class Principal extends JFrame {
                 //modelo.setValueAt(, cant++, 1);
                 
             }
-//            modelo.setValueAt( " " , cant++, 0);
+            modelo.insertRow(cant, new Object[]{});
+            modelo.setValueAt( " " , cant++, 0);
 
         }
         
         public void RefrescarTabla(){
-            vaciar();
-            LinkedList<Atributo> atribs = tab.getAtributos();
             cant = 0;
-            for (Atributo atr : atribs) {
-                modelo.insertRow(cant, new Object[]{});
-                modelo.setValueAt(atr.getNombre()+ "  " + atr.getLlaves() , cant++, 0);
-                //modelo.setValueAt(, i++, 1);
-                
-            }
+            ver();
+//            vaciar();
+//            LinkedList<Atributo> atribs = tab.getAtributos();
+//            
+//            for (Atributo atr : atribs) {
+//                modelo.insertRow(cant, new Object[]{});
+//                modelo.setValueAt(atr.getNombre()+ "  " + atr.getLlaves() , cant++, 0);
+//                //modelo.setValueAt(, i++, 1);
+//                
+//            }
+//            modelo.insertRow(cant, new Object[]{});
 //            modelo.setValueAt( " " , cant++, 0);
+////            if (modelo.getValueAt(modelo.getColumnCount()-1, 0).toString().compareTo("") == 0) {
+//                
+//            }
+            
         }
 
         public void setTab(Relacion tab) {
@@ -243,6 +263,47 @@ public class Principal extends JFrame {
             R1 -= n;
             puntosR1.remove(n);
         }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+            int key = e.getKeyChar();
+            if (key == 10) {
+                LinkedList <Atributo> listaux = new LinkedList<>();
+                for (int i = 0; i < modelo.getRowCount(); i++) {
+                    String valor = modelo.getValueAt(i, 0).toString().trim();
+                    if (valor.isEmpty()) {
+                        RefrescarTabla();
+                        continue;
+                    }
+                    String llave = "";
+                    if ((valor.contains("(") && !valor.contains(")")) || (!valor.contains("(") && valor.contains(")"))) {
+                            JOptionPane.showMessageDialog(rootPane, "ERROR llave mal tipeada");
+                            return;
+                        }
+                    while (valor.contains("(")) {
+                        llave += valor.substring(valor.indexOf("("), valor.indexOf(")")+1).trim().toUpperCase()+ " ";
+                        valor = valor.substring(0, valor.indexOf("(")).trim();
+                    }
+                    listaux.add(new Atributo(valor));
+                    listaux.getLast().addLlaves(llave);
+                }
+                tab.removeAllAtributo();
+                tab.setAtributos(listaux);
+                
+                RefrescarTabla();
+            }
+            
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            
+        }
         
         
     }
@@ -275,7 +336,14 @@ public class Principal extends JFrame {
             }
         });
         menuArchivoExportar = new JMenuItem("Exportat Script");
-//        menuArchivo.add(menuArchivoExportar);//Aun no hace nada
+        menuArchivo.add(menuArchivoExportar);//Aun no hace nada
+        menuArchivoExportar.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                exportarSQL();
+            }
+        });
         menuArchivo.add(new JSeparator());
         menuArchivoNuevaVentana = new JMenuItem("Nueva Ventana");
         menuArchivo.add(menuArchivoNuevaVentana);
@@ -293,7 +361,7 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose();
+                System.exit(0);
             }
         });
         menuEditar = new JMenu("Editar");
@@ -304,22 +372,7 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (JOptionPane.showConfirmDialog(rootPane, "¿seguro?") != 0) {
-                    return;
-                }
-                Script = "";
-                for (VentanaInterna tabla : tablas) {
-                    try {
-                        tabla.setClosed(true);
-                    } catch (PropertyVetoException ex) {
-                        Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                tablas = new LinkedList<>();
-                relacionesEntreRelaciones = new LinkedList<>();
-                puntos = new LinkedList<>();
-                numeroTablas = 0;
-                panelPrincipal.repaint();
+                limpiarVentana();
             }
         });
 
@@ -336,7 +389,7 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                                
+                nuevaTablaVacia(xNV, yNV);
             }
         });
         
@@ -357,6 +410,31 @@ public class Principal extends JFrame {
         setVisible(true);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    }
+    
+    
+    private void nuevaTablaVacia(int x, int y){
+        Relacion re = new Relacion();
+        String titulo = JOptionPane.showInputDialog("Nombre tabla");
+    }
+    
+    private void limpiarVentana(){
+        if (JOptionPane.showConfirmDialog(rootPane, "¿seguro?") != 0) {
+            return;
+        }
+        Script = "";
+        for (VentanaInterna tabla : tablas) {
+            try {
+                tabla.setClosed(true);
+            } catch (PropertyVetoException ex) {
+                Logger.getLogger(Principal.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        tablas = new LinkedList<>();
+        relacionesEntreRelaciones = new LinkedList<>();
+        puntos = new LinkedList<>();
+        numeroTablas = 0;
+        panelPrincipal.repaint();
     }
 
     private void importarSQL() throws FileNotFoundException, IOException {
@@ -396,11 +474,71 @@ public class Principal extends JFrame {
             while (Script.contains("/*")) {
                 Script = Script.substring(0, Script.indexOf("/*")) + (Script.contains("*/") ? Script.substring(Script.indexOf("*/") + 2, Script.length()) : "");
             }
-            System.out.println(Script);
+//            System.out.println(Script);
             crearTabla();
         }
     }
 
+    public void exportarSQL(){
+//        if (tablas.isEmpty()) {
+//            JOptionPane.showMessageDialog(rootPane, "No hay tablas creadas");
+//            return;
+//        }
+        javax.swing.JFileChooser jF1= new javax.swing.JFileChooser();
+        try{
+            if(jF1.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+                String ruta = jF1.getSelectedFile().getAbsolutePath();
+                if (!ruta.contains(".")) {
+                    ruta += ".sql";
+                }
+                File archivo = new File(ruta);
+                BufferedWriter bw;
+//                System.out.println(ruta);
+                if(archivo.exists() && JOptionPane.showConfirmDialog(rootPane,
+                        "El archivo ya existe\n¿Desea remplazarlo?") > 0) {
+                    return;
+                }
+                bw = new BufferedWriter(new FileWriter(archivo));
+                String scr = CrearScript();
+                bw.write(scr);
+                bw.close();
+            }
+        }catch (HeadlessException | IOException ex){
+        } 
+    }
+    
+    public String CrearScript(){
+        String sR = "";
+        for (VentanaInterna tabla : tablas) {
+            sR += "\n\n--CREAR TABLA "  + tabla.getTitle() + "\n";
+            sR += "CREATE TABLE " + tabla.getTitle();
+            sR += " (\n";
+            String ll = "PRIMARY KEY (";
+            for (Atributo atrib : tabla.tab.getAtributos()) {
+                sR += "\t" + atrib.getNombre() + " " + atrib.getTipo() + ",\n";
+                if (atrib.getLlaves().contains("PK")) {
+                    ll += "" + atrib.getNombre() + ",";
+                }
+            }
+            ll = ll.substring(0, ll.trim().lastIndexOf(",")  == ll.trim().length()-1 ? ll.length() -1 : ll.length());
+            ll += ")";
+            sR = sR.substring(0, sR.trim().lastIndexOf(",")  == sR.trim().length()-1 ? sR.length() -2 : sR.length());
+            if (ll.indexOf(")") != 13) {
+                sR += ",\n\t" + ll;
+            }
+            sR += "\n);\n";
+        }
+        sR += "\n\n";
+        for (RelacionRelacionada rela : relacionesEntreRelaciones) {
+            sR += "ALTER TABLE " + rela.relacion1.getTitle().trim();
+            sR += " ADD FOREIGN KEY (" + rela.campo1;
+            sR += ") REFERENCES " + rela.relacion2.getTitle().trim();
+            sR += " (" + rela.campo2 + ");\n";
+        }
+        
+        return sR;
+    }
+    
     private void crearTabla() {
         if (!Script.contains("CREATE TABLE")) {
             JOptionPane.showMessageDialog(rootPane, "No se creo nada");
@@ -483,7 +621,7 @@ public class Principal extends JFrame {
         String[] constr = Script.split("ALTER TABLE");
         for (int i = 1; i < constr.length; i++) {
             String aux = constr[i].split(";")[0];
-            System.out.println(aux);
+//            System.out.println(aux);
             String[] aux2 = aux.split("ADD");
             VentanaInterna v_aux = buscarTab(aux2[0].trim());
             relacionar(aux2[1], v_aux);
@@ -492,7 +630,7 @@ public class Principal extends JFrame {
         Repintar();
     }
     
-    boolean relacionar(String atr, VentanaInterna tabla){
+    private boolean relacionar(String atr, VentanaInterna tabla){
         atr = atr.replaceAll("KEY", " ");
 //                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
         if (atr.contains("FOREIGN")) {
@@ -500,22 +638,25 @@ public class Principal extends JFrame {
             String reE = atr.split("REFERENCES")[1];
             reE = reE.substring(0, reE.indexOf("(")).trim();
             VentanaInterna reExte = buscarTab(reE);
-            RelacionRelacionada ra = new RelacionRelacionada(tabla,reExte);
-            relacionesEntreRelaciones.add(ra);
             puntos.add(0);
             puntos.add(0);
             puntos.add(0);
             puntos.add(0);
-            String atributo = atr.split("REFERENCES")[0];
-            atributo = atributo.substring(atributo.indexOf("(") + 1, atributo.indexOf(")")).trim();
+            String [] atrAux = atr.split("REFERENCES");
+            String atributo1 = atrAux[0];
+            String atributo2 = atrAux[1];
+            atributo1 = atributo1.substring(atributo1.indexOf("(") + 1, atributo1.indexOf(")")).trim();
+            atributo2 = atributo2.substring(atributo2.indexOf("(") + 1, atributo2.indexOf(")")).trim();
             LinkedList<Atributo> atrs = tabla.tab.getAtributos();
             for (Atributo aa1 : atrs) {
-                if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
+                if (aa1.getNombre().compareToIgnoreCase(atributo1) == 0) {
                     aa1.addLlaves("(FK)");
 
                     break;
                 }
             }
+            RelacionRelacionada ra = new RelacionRelacionada(tabla, atributo1, reExte, atributo2);
+            relacionesEntreRelaciones.add(ra);
             tabla.RefrescarTabla();
             return true;
         }
@@ -538,7 +679,7 @@ public class Principal extends JFrame {
         return false;
     }
 
-    VentanaInterna buscarTab (String reE){
+    private VentanaInterna buscarTab (String reE){
         for (VentanaInterna r : tablas) {
                 if (r.getTitle().compareToIgnoreCase(reE) == 0) {
                     return r;
