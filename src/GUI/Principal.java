@@ -2,6 +2,7 @@ package GUI;
 
 import Clases.Atributo;
 import Clases.Relacion;
+import Clases.RelacionRelacionada;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.HeadlessException;
@@ -61,39 +62,9 @@ public class Principal extends JFrame {
         }
     }
 
+   
     
-    class RelacionRelacionada {
-        VentanaInterna relacion1;
-        VentanaInterna relacion2;
-        String campo1;
-        String campo2;
-
-        public RelacionRelacionada(VentanaInterna relacion1, String campo1, VentanaInterna relacion2, String campo2) {
-            this.relacion1 = relacion1;
-            this.relacion2 = relacion2;
-            this.campo1 = campo1;
-            this.campo2 = campo2;
-        }
-
-        public VentanaInterna getRelacion1() {
-            return relacion1;
-        }
-
-        public VentanaInterna getRelacion2() {
-            return relacion2;
-        }
-
-        public void setRelacion1(VentanaInterna relacion1) {
-            this.relacion1 = relacion1;
-        }
-
-        public void setRelacion2(VentanaInterna relacion2) {
-            this.relacion2 = relacion2;
-        }
-    }
-
-    
-    class VentanaInterna extends JInternalFrame implements ComponentListener, KeyListener {
+    public class VentanaInterna extends JInternalFrame implements ComponentListener, KeyListener {
 
         private JTable tabla;
         private DefaultTableModel modelo;
@@ -530,10 +501,10 @@ public class Principal extends JFrame {
         }
         sR += "\n\n";
         for (RelacionRelacionada rela : relacionesEntreRelaciones) {
-            sR += "ALTER TABLE " + rela.relacion1.getTitle().trim();
-            sR += " ADD FOREIGN KEY (" + rela.campo1;
-            sR += ") REFERENCES " + rela.relacion2.getTitle().trim();
-            sR += " (" + rela.campo2 + ");\n";
+            sR += "ALTER TABLE " + rela.getRelacion1().getTitle().trim();
+            sR += " ADD FOREIGN KEY (" + rela.getCampo1();
+            sR += ") REFERENCES " + rela.getRelacion2().getTitle().trim();
+            sR += " (" + rela.getCampo2() + ");\n";
         }
         
         return sR;
@@ -711,8 +682,8 @@ public class Principal extends JFrame {
         gra.setColor(Color.darkGray);
         
         for (RelacionRelacionada rer : relacionesEntreRelaciones) {
-            VentanaInterna v1 = rer.relacion1;
-            VentanaInterna v2 = rer.relacion2;
+            VentanaInterna v1 = rer.getRelacion1();
+            VentanaInterna v2 = rer.getRelacion2();
             int x1,x2,y1,y2;
             x1 = v1.getX();
             y1 = v1.getY() + (v1.getHeight() / 2);
