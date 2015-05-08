@@ -61,8 +61,6 @@ public class Principal extends JFrame {
             gra = getGraphics();
         }
     }
-
-   
     
     public class VentanaInterna extends JInternalFrame implements ComponentListener, KeyListener {
 
@@ -74,8 +72,6 @@ public class Principal extends JFrame {
         private int R1 = 0;
         private LinkedList<Integer> puntosRn = new LinkedList<>();
         private LinkedList<Integer> puntosR1 = new LinkedList<>();
-
-        
         
         public VentanaInterna(String title, Relacion tab) {
             super(title);
@@ -387,6 +383,16 @@ public class Principal extends JFrame {
     private void nuevaTablaVacia(int x, int y){
         Relacion re = new Relacion();
         String titulo = JOptionPane.showInputDialog("Nombre tabla");
+        VentanaInterna ven = new VentanaInterna(titulo, re);
+        tablas.add(ven);
+        remove(panelPrincipal);
+        add(ven);
+        add(panelPrincipal);
+        
+//        int x = (numeroTablas != 0) ? (80*numeroTablas) : 20; 
+//        int y = 30;
+        ven.setLocation(x, y);
+        numeroTablas++;
     }
     
     private void limpiarVentana(){
@@ -415,7 +421,11 @@ public class Principal extends JFrame {
         int opcion = examinar.showOpenDialog(this);
         //new File("D:\\Desktop\\jexcelapi");
         if (opcion == JFileChooser.APPROVE_OPTION) {
-            direccionScript = examinar.getSelectedFile().getAbsoluteFile();
+            String s1 = examinar.getSelectedFile().getAbsolutePath();
+            if (!s1.contains(".")) {
+                    s1 += ".sql";
+                }
+            direccionScript = new File(s1);
             FileReader fr = new FileReader(direccionScript);
             BufferedReader bf = new BufferedReader(fr);
             String s;
