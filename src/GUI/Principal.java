@@ -14,6 +14,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyVetoException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -373,10 +375,23 @@ public class Principal extends JFrame {
         
         panelPrincipal.repaint();
         
+        
+        addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                if (tablas.size() == 0 || JOptionPane.showConfirmDialog(rootPane, "¿Desea realmente cerrar la ventana?", "Cerrar", 
+                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    dispose();
+                }
+            }
+            
+});
+        
         setSize(900, 600);
         setVisible(true);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
     
     
@@ -396,7 +411,7 @@ public class Principal extends JFrame {
     }
     
     private void limpiarVentana(){
-        if (JOptionPane.showConfirmDialog(rootPane, "¿seguro?") != 0) {
+        if (JOptionPane.showConfirmDialog(rootPane, "¿seguro?", "Limpiar", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.NO_OPTION) {
             return;
         }
         Script = "";
