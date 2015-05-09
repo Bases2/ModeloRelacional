@@ -94,8 +94,6 @@ public class Principal extends JFrame {
             this.tab = tab;
             ver();
             
-            int alto = cant > 2 ? (cant * 20) + 20 : 70;
-            setSize(160, alto);
         }
         
         private void ver() {
@@ -109,27 +107,14 @@ public class Principal extends JFrame {
             }
             modelo.insertRow(cant, new Object[]{});
             modelo.setValueAt( " " , cant++, 0);
-
+            
+            int alto = cant > 2 ? (cant * 20) + 20 : 70;
+            setSize(160, alto);
         }
         
         public void RefrescarTabla(){
             cant = 0;
-            ver();
-//            vaciar();
-//            LinkedList<Atributo> atribs = tab.getAtributos();
-//            
-//            for (Atributo atr : atribs) {
-//                modelo.insertRow(cant, new Object[]{});
-//                modelo.setValueAt(atr.getNombre()+ "  " + atr.getLlaves() , cant++, 0);
-//                //modelo.setValueAt(, i++, 1);
-//                
-//            }
-//            modelo.insertRow(cant, new Object[]{});
-//            modelo.setValueAt( " " , cant++, 0);
-////            if (modelo.getValueAt(modelo.getColumnCount()-1, 0).toString().compareTo("") == 0) {
-//                
-//            }
-            
+            ver();            
         }
 
         public void setTab(Relacion tab) {
@@ -239,18 +224,38 @@ public class Principal extends JFrame {
             if (key == 10) {
                 LinkedList <Atributo> listaux = new LinkedList<>();
                 for (int i = 0; i < modelo.getRowCount(); i++) {
-                    String valor = modelo.getValueAt(i, 0).toString().trim();
+                    String valor = modelo.getValueAt(i, 0).toString().trim().toUpperCase();
                     if (valor.isEmpty()) {
-                        RefrescarTabla();
                         continue;
                     }
                     String llave = "";
                     if ((valor.contains("(") && !valor.contains(")")) || (!valor.contains("(") && valor.contains(")"))) {
-                            JOptionPane.showMessageDialog(rootPane, "ERROR llave mal tipeada");
-                            return;
-                        }
-                    while (valor.contains("(")) {
-                        llave += valor.substring(valor.indexOf("("), valor.indexOf(")")+1).trim().toUpperCase()+ " ";
+                        JOptionPane.showMessageDialog(rootPane, "ERROR llave mal tipeada");
+                        continue;
+                    }
+                    
+                    if (valor.contains("(PK)")) {
+                        llave += "(PK) ";
+                    }
+                    if (valor.contains("(FK)")) {
+                        System.out.println("hhh");
+                        if (!valor.contains("=") || valor.substring(valor.indexOf("=") +1).trim().isEmpty()) {
+                            JOptionPane.showMessageDialog(rootPane, "Llave foranea " + valor.substring(0, valor.indexOf("(")) + " mal digitada");
+                            continue;
+                        }System.out.println("kamsa");
+                        String campo1 = valor.substring(0, valor.indexOf("("));
+                        String campo2 = valor.substring(valor.lastIndexOf("("), valor.lastIndexOf(")") -1);
+                        String tab2 = (valor.substring(valor.indexOf("=") +1, valor.lastIndexOf("("))).trim();
+                        VentanaInterna rela2 = buscarTab(tab2);
+                        RelacionRelacionada nuevaLinea = new RelacionRelacionada(this, campo1, rela2, campo2);
+                        relacionesEntreRelaciones.add(nuevaLinea);
+                        puntos.add(0);
+                        puntos.add(0);
+                        puntos.add(0);
+                        puntos.add(0);
+                        llave += "(PK) ";
+                    }
+                    if(valor.contains("(")) {    
                         valor = valor.substring(0, valor.indexOf("(")).trim();
                     }
                     listaux.add(new Atributo(valor));
@@ -370,8 +375,7 @@ public class Principal extends JFrame {
                     clicmenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
-            
-});
+        });
         
         panelPrincipal.repaint();
         
@@ -385,8 +389,7 @@ public class Principal extends JFrame {
                     dispose();
                 }
             }
-            
-});
+        });
         
         setSize(900, 600);
         setVisible(true);
@@ -397,7 +400,7 @@ public class Principal extends JFrame {
     
     private void nuevaTablaVacia(int x, int y){
         Relacion re = new Relacion();
-        String titulo = JOptionPane.showInputDialog("Nombre tabla");
+        String titulo = JOptionPane.showInputDialog("Nombre tabla").trim().toUpperCase();
         VentanaInterna ven = new VentanaInterna(titulo, re);
         tablas.add(ven);
         remove(panelPrincipal);
