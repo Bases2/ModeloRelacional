@@ -225,15 +225,12 @@ public class Principal extends JFrame {
                 LinkedList <Atributo> listaux = new LinkedList<>();
                 for (int i = 0; i < modelo.getRowCount(); i++) {
                     String valor = modelo.getValueAt(i, 0).toString().trim().toUpperCase();
+                    String tipo = "";
                     if (valor.isEmpty()) {
                         continue;
                     }
                     String llave = "";
-                    if ((valor.contains("(") && !valor.contains(")")) || (!valor.contains("(") && valor.contains(")"))) {
-                        JOptionPane.showMessageDialog(rootPane, "ERROR llave mal tipeada");
-                        continue;
-                    }
-                    
+                                        
                     if (valor.contains("(PK)")) {
                         llave += "(PK) ";
                     }
@@ -255,11 +252,18 @@ public class Principal extends JFrame {
                         puntos.add(0);
                         llave += "(PK) ";
                     }
+                    
+                    if (valor.contains(":")) {
+                        tipo = valor.substring(valor.indexOf(":") +1).trim();
+                        valor = valor.substring(0, valor.indexOf(":"));
+                    }
+                    
                     if(valor.contains("(")) {    
                         valor = valor.substring(0, valor.indexOf("(")).trim();
                     }
                     listaux.add(new Atributo(valor));
                     listaux.getLast().addLlaves(llave);
+                    listaux.getLast().setTipo(tipo);
                 }
                 tab.removeAllAtributo();
                 tab.setAtributos(listaux);
