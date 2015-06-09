@@ -36,6 +36,7 @@ public class Atributo {
     public Atributo(String Nombre) {
         this.Nombre = Nombre;
         this.Llaves = "";
+        this.Tipo = "";
     }
 
     public Atributo() {

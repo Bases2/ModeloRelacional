@@ -12,10 +12,10 @@ import GUI.Principal;
  * @author Koaski
  */
 public class RelacionRelacionada {
-    Principal.VentanaInterna relacion1;
-    Principal.VentanaInterna relacion2;
-    String campo1;
-    String campo2;
+    private Principal.VentanaInterna relacion1;
+    private Principal.VentanaInterna relacion2;
+    private String campo1;
+    private String campo2;
 
     public RelacionRelacionada(Principal.VentanaInterna relacion1, String campo1, Principal.VentanaInterna relacion2, String campo2) {
         this.relacion1 = relacion1;

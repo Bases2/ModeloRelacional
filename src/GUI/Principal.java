@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -41,7 +43,7 @@ public class Principal extends JFrame {
     JMenuBar menu;
     JMenu menuArchivo, menuEditar;
     JMenuItem menuArchivoImportar, menuArchivoExportar, menuArchivoNuevaVentana, menuArchivoSalir;
-    JMenuItem menuEditarLimpiar;
+    JMenuItem menuEditarLimpiar, menuEditarAgregarTabla, menuEditarEliminarTabla;
     JMenuItem clicmenuAgregarTabla;
     Graphics gra;
     String Script;
@@ -52,13 +54,15 @@ public class Principal extends JFrame {
     LinkedList<Integer> puntos = new LinkedList<>();
     JPopupMenu clicmenu;
     int xNV = 10, yNV = 30;
+    Color colorFondo = Color.LIGHT_GRAY;
+    Color colorLineas = Color.DARK_GRAY;
 
     class PanelEscritorio extends JDesktopPane {
 
         @Override
         public void paint(Graphics g) {
             super.paintComponent(g);
-            setBackground(Color.lightGray);
+            setBackground(colorFondo);
 
             gra = getGraphics();
         }
@@ -88,7 +92,7 @@ public class Principal extends JFrame {
             setVisible(true);
             setResizable(true);
 //            tabla.set
-
+//            setClosable(true);
             tabla.addKeyListener(this);
             
             this.tab = tab;
@@ -223,44 +227,84 @@ public class Principal extends JFrame {
             int key = e.getKeyChar();
             if (key == 10) {
                 LinkedList <Atributo> listaux = new LinkedList<>();
+                int posicionTabla = tabla.getSelectedRow();
+                posicionTabla = posicionTabla == 0 ? tabla.getRowCount() -1 : posicionTabla -1 ;
                 for (int i = 0; i < modelo.getRowCount(); i++) {
                     String valor = modelo.getValueAt(i, 0).toString().trim().toUpperCase();
-                    String tipo = "";
+                    String tipo = "VARCHAR";
                     if (valor.isEmpty()) {
+                        if (posicionTabla != (tabla.getRowCount() -1)) {
+                            Atributo aAux = tab.getAtributos().get(posicionTabla);
+                            if (aAux.getLlaves().contains("(FK)")) {
+                                removerRelacion(title);
+                            }else{
+                                if (existeRelacion(title, aAux.getNombre())) {
+                                    JOptionPane.showMessageDialog(rootPane, "no puede eliminarse el atributo "
+                                            + aAux.getNombre() + " mientras otra tabla haga referencia a este");
+                                    RefrescarTabla();
+                                    return ;
+                                }
+                            }
+                            
+                        }
                         continue;
                     }
+                    
                     String llave = "";
-                                        
+                     if (valor.contains(":")) {
+                        tipo = valor.substring(valor.indexOf(":") +1).trim().split("(PK)")[0].split("(FK)")[0].split("=")[0];
+                        int posic = valor.indexOf(tipo);
+                        int tam = tipo.length();
+                        valor = valor.substring(0, valor.indexOf(":")) + " " + valor.substring(posic + tam -1) ;
+                        //valor = valor.substring(0, valor.indexOf(":"));
+                    }                   
+                     
                     if (valor.contains("(PK)")) {
                         llave += "(PK) ";
-                    }
-                    if (valor.contains("(FK)")) {
-                        System.out.println("hhh");
-                        if (!valor.contains("=") || valor.substring(valor.indexOf("=") +1).trim().isEmpty()) {
-                            JOptionPane.showMessageDialog(rootPane, "Llave foranea " + valor.substring(0, valor.indexOf("(")) + " mal digitada");
-                            continue;
-                        }System.out.println("kamsa");
-                        String campo1 = valor.substring(0, valor.indexOf("("));
-                        String campo2 = valor.substring(valor.lastIndexOf("("), valor.lastIndexOf(")") -1);
-                        String tab2 = (valor.substring(valor.indexOf("=") +1, valor.lastIndexOf("("))).trim();
-                        VentanaInterna rela2 = buscarTab(tab2);
-                        RelacionRelacionada nuevaLinea = new RelacionRelacionada(this, campo1, rela2, campo2);
-                        relacionesEntreRelaciones.add(nuevaLinea);
-                        puntos.add(0);
-                        puntos.add(0);
-                        puntos.add(0);
-                        puntos.add(0);
-                        llave += "(PK) ";
+                        int posPk = valor.indexOf("(PK)");
+                        valor = valor.substring(0, posPk) + " " + valor.substring(posPk +4);
                     }
                     
-                    if (valor.contains(":")) {
-                        tipo = valor.substring(valor.indexOf(":") +1).trim();
-                        valor = valor.substring(0, valor.indexOf(":"));
+                    if (valor.contains("(FK)")) {
+                        String campo1 = valor.substring(0, valor.indexOf("(")).trim();
+                        boolean s = true;
+                        if (!valor.contains("=") || valor.substring(valor.indexOf("=") +1).trim().isEmpty()) {
+                           
+                            if (posicionTabla == i) { 
+                                JOptionPane.showMessageDialog(rootPane, "Llave foranea " + campo1 
+                                    + " debe hacer referencia a algún valor ");
+                                return ;
+                            }
+                            else{
+                                s = false;
+                            }
+                            
+                        }
+                        if (s) {
+                            String campo2 = valor.substring(valor.lastIndexOf("(") +1, valor.lastIndexOf(")")).trim();
+                            String tab2 = (valor.substring(valor.indexOf("=") +1, valor.lastIndexOf("("))).trim();
+                            VentanaInterna rela2 = buscarTab(tab2);
+                            if (rela2 == null) {
+                                JOptionPane.showMessageDialog(rootPane, "Tabla a la que hace refencia el campo " + campo1 + " no encontrada");
+                                return ;
+                            }if (rela2.tab.buscarAtributo(campo2) == null) {
+                                JOptionPane.showMessageDialog(rootPane, "Atributo al que hace refencia el campo " + campo1 + " no encontrado");
+                                return ;
+                            }
+                            RelacionRelacionada nuevaLinea = new RelacionRelacionada(this, campo1, rela2, campo2);
+                            relacionesEntreRelaciones.add(nuevaLinea);
+                            puntos.add(0);
+                            puntos.add(0);
+                            puntos.add(0);
+                            puntos.add(0);
+                        }
+                        llave += "(FK) ";
                     }
                     
                     if(valor.contains("(")) {    
-                        valor = valor.substring(0, valor.indexOf("(")).trim();
+                        valor = valor.substring(0, valor.indexOf("("));
                     }
+                    valor = valor.trim();
                     listaux.add(new Atributo(valor));
                     listaux.getLast().addLlaves(llave);
                     listaux.getLast().setTipo(tipo);
@@ -282,9 +326,9 @@ public class Principal extends JFrame {
         public void keyReleased(KeyEvent e) {
             
         }
-        
-        
-    }
+
+            
+        }
 
     public Principal(String title) throws HeadlessException {
         super(title);
@@ -344,6 +388,28 @@ public class Principal extends JFrame {
         });
         menuEditar = new JMenu("Editar");
         menu.add(menuEditar);
+        
+        menuEditarAgregarTabla =new JMenuItem("Nueva tabla");
+        menuEditar.add(menuEditarAgregarTabla);
+        
+        menuEditarAgregarTabla.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                nuevaTablaVacia(10, 30);
+            }
+        });
+        
+        menuEditarEliminarTabla = new JMenuItem("Eliminar Tabla");
+        menuEditar.add(menuEditarEliminarTabla);
+        menuEditarEliminarTabla.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                eliminarTabla();
+            }
+        });
+        
         menuEditarLimpiar = new JMenuItem("Limpiar");
         menuEditar.add(menuEditarLimpiar);
         menuEditarLimpiar.addActionListener(new ActionListener() {
@@ -353,6 +419,7 @@ public class Principal extends JFrame {
                 limpiarVentana();
             }
         });
+        
 
         panelPrincipal = new PanelEscritorio();
         add(panelPrincipal);
@@ -376,7 +443,9 @@ public class Principal extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.isMetaDown() && !e.isPopupTrigger()) {
-                    clicmenu.show(e.getComponent(), e.getX(), e.getY());
+                    xNV = e.getX();
+                    yNV = e.getY();
+                    clicmenu.show(e.getComponent(), xNV, yNV);
                 }
             }
         });
@@ -404,7 +473,23 @@ public class Principal extends JFrame {
     
     private void nuevaTablaVacia(int x, int y){
         Relacion re = new Relacion();
-        String titulo = JOptionPane.showInputDialog("Nombre tabla").trim().toUpperCase();
+        String titulo = JOptionPane.showInputDialog("Nombre tabla");
+        
+        if (titulo == null) {
+            return ;
+        }
+        
+        titulo = titulo.trim().toUpperCase();
+        
+        if (titulo.isEmpty()) {
+            return ;
+        }
+        
+        if (buscarTab(titulo) != null) {
+            JOptionPane.showMessageDialog(rootPane, "Ya existe una tabla con el nombre " + titulo);
+            return;
+        }
+        
         VentanaInterna ven = new VentanaInterna(titulo, re);
         tablas.add(ven);
         remove(panelPrincipal);
@@ -633,6 +718,79 @@ public class Principal extends JFrame {
         Repintar();
     }
     
+    private void eliminarTabla(){
+        String tablaA_Elimminar = JOptionPane.showInputDialog("Tabla que desea eliminar");
+        
+        if (tablaA_Elimminar == null ) {
+            return ;
+        }
+        
+        tablaA_Elimminar = tablaA_Elimminar.trim().toUpperCase();
+        
+        if (tablaA_Elimminar.isEmpty()) {
+            return ;
+        }
+        
+        VentanaInterna ta = buscarTab(tablaA_Elimminar);
+        
+        if (ta == null) {
+            return ;
+        }
+        
+        if (existeAlgunaRelacion(ta)) {
+            JOptionPane.showMessageDialog(rootPane, "no puede eliminarse la tabla "
+                    + tablaA_Elimminar + " ya que tiene uno o más campos que son llaves foraneas en una o más tablas");
+            return ;
+        }
+        
+        removerCualquierRelacion(ta);
+        ta.setVisible(false);
+        remove(ta);
+        tablas.remove(ta);
+        Repintar();
+    }
+    
+    private void removerCualquierRelacion(VentanaInterna tabla){
+        for (Atributo atr : tabla.getTab().getAtributos()) {
+            if (atr.getLlaves().contains("(FK)")) {
+                removerRelacion(tabla.getTitle());
+            }
+        }
+    }
+    
+    private void removerRelacion(String tabla){
+        int i = 0;
+        for (RelacionRelacionada re : relacionesEntreRelaciones) {
+            if (re.getRelacion1().getTitle().compareToIgnoreCase(tabla.trim()) == 0) {
+                relacionesEntreRelaciones.remove(re);
+                puntos.removeLast();
+                puntos.removeLast();
+                puntos.removeLast();
+                puntos.removeLast();
+            }
+            i += 4;
+        }
+    }
+    
+    private boolean existeAlgunaRelacion(VentanaInterna tabla){
+        for (Atributo atr : tabla.getTab().getAtributos()) {
+            if (existeRelacion(tabla.getTitle(), atr.getNombre())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean existeRelacion(String tabla, String campo){
+        for (RelacionRelacionada re : relacionesEntreRelaciones) {
+            if (re.getRelacion2().getTitle().compareToIgnoreCase(tabla.trim()) == 0 
+                    && re.getCampo2().compareToIgnoreCase(campo) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private boolean relacionar(String atr, VentanaInterna tabla){
         atr = atr.replaceAll("KEY", " ");
 //                    String atributo = atr.substring(atr.indexOf("("), atr.indexOf(")")).trim();
@@ -691,9 +849,14 @@ public class Principal extends JFrame {
         return null;
     }
     
+    private void RomoveTab (String reE){
+        VentanaInterna d = buscarTab(reE);
+        tablas.remove(d);
+    }
+    
     
     public void Repintar() {
-        gra.setColor(Color.lightGray);
+        gra.setColor(colorFondo);
         for (int i = 0; i < puntos.size(); i+=4) {
             int x1,x2,y1,y2;
             x1 = puntos.get(i);
@@ -702,16 +865,18 @@ public class Principal extends JFrame {
             y2 = puntos.get(i+3);
             gra.drawLine(x1, y1, x2, y2);
             if (x1 > x2) {
-                gra.drawString("1", x2+6, y2);
-                gra.drawString("n", x1-9, y1);
+                x1 = x1 -9;
+                x2 = x2 +6;
             }
             else{
-                gra.drawString("1", x2-9, y2);
-                gra.drawString("n", x1+6, y1);
+                x1 = x1 +6;
+                x2 = x2 -9;
             }
+            gra.drawString("1", x2, y2);
+            gra.drawString("n", x1, y1);
         }
         int i = 0;
-        gra.setColor(Color.darkGray);
+        gra.setColor(colorLineas);
         
         for (RelacionRelacionada rer : relacionesEntreRelaciones) {
             VentanaInterna v1 = rer.getRelacion1();
@@ -721,10 +886,22 @@ public class Principal extends JFrame {
             y1 = v1.getY() + (v1.getHeight() / 2);
             x2 = v2.getX();
             y2 = v2.getY() + (v2.getHeight() / 2);
-
+            
+            int xn = 0, x_1 = 0;
             if (x1 > x2) {
                 x2 += v2.getWidth();
-                gra.drawString("1", x2+6, y2);
+                xn = x1 -9;
+                x_1 = x2 +6;
+            }
+            else{
+                xn = x1 +6;
+                x_1 = x2 -9;
+            }
+            gra.drawString("1", x2, y2);
+            gra.drawString("n", xn, y1);
+            if (x1 > x2) {
+                
+                gra.drawString("1", x_1, y2);
                 gra.drawString("n", x1-9, y1);
             }
             else{
