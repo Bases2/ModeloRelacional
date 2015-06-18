@@ -19,6 +19,16 @@ public class Relacion {
         }
         return null;
     }
+    
+    public int posicionAtributo(String nombreMateria) {
+        int i = 0;
+        for (Atributo aa1 : atributos) {
+            if (aa1.getNombre().compareToIgnoreCase(nombreMateria) == 0) {
+                return i;
+            }
+        }
+        return 0;
+    }
 
     public void addAtributo(Atributo atributo) {
         atributos.add(atributo);

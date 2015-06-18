@@ -7,9 +7,9 @@ package Clases;
 
 public class Atributo {
 
-    private String Nombre;
-    private String Llaves;
-    private String Tipo;
+    private String Nombre = "";
+    private String Llaves = "";
+    private String Tipo = "";
 
     
     public Atributo(String Nombre, String Llaves, String Tipo) {
@@ -62,7 +62,7 @@ public class Atributo {
 
     public void addLlaves(String... llaves) {
         for (String llv : llaves) {
-            this.Llaves += llv;
+            this.Llaves += " " + llv;
         }
     }
 
