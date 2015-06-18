@@ -74,10 +74,6 @@ public class Principal extends JFrame {
         private DefaultTableModel modelo;
         private Relacion tab;
         private int cant = 0;
-        private int Rn = 0;
-        private int R1 = 0;
-        private LinkedList<Integer> puntosRn = new LinkedList<>();
-        private LinkedList<Integer> puntosR1 = new LinkedList<>();
         
         public VentanaInterna(String title, Relacion tab) {
             super(title);
@@ -158,66 +154,6 @@ public class Principal extends JFrame {
         @Override
         public void componentHidden(ComponentEvent e) {
 
-        }
-
-        public int getPuntosR1(int index) {
-            return puntosR1.get(index);
-        }
-
-        public int getPuntosRn(int index) {
-            return puntosRn.get(index);
-        }
-        
-        public int getR1() {
-            return R1;
-        }
-
-        public int getRn() {
-            return Rn;
-        }
-        
-        public void addRn(){
-            Rn++;
-            puntosRn.add(0);
-        }
-        
-        public void addR1(){
-            R1++;
-            puntosR1.add(0);
-        }
-
-        public void addRn(int n){
-            Rn += n;
-            for (int i = 0; i < n; i++) {
-                puntosRn.add(0);
-            }
-        }
-        
-        public void addR1(int n){
-            R1 += n;
-            for (int i = 0; i < n; i++) {
-                puntosR1.add(0);
-            }
-        }
-        
-        public void removeRn(){
-            Rn--;
-            puntosRn.removeLast();
-        }
-        
-        public void removeR1(){
-            R1--;
-            puntosR1.removeLast();
-        }
-        
-        public void removeRn(int n){
-            Rn -= n;
-            puntosRn.remove(n);
-        }
-        
-        public void removeR1(int n){
-            R1 -= n;
-            puntosR1.remove(n);
         }
 
         @Override
@@ -844,7 +780,14 @@ public class Principal extends JFrame {
             return ;
         }
         
+        if (existeAlgunaRelacion1A1(ta)) {
+            JOptionPane.showMessageDialog(rootPane, "no puede eliminarse la tabla "
+                    + tablaA_Elimminar + " ya que tiene uno o más campos que son llaves foraneas en una o más tablas");
+            return ;
+        }
+        
         removerCualquierRelacion(ta);
+        removerCualquierRelacion1A1(ta);
         ta.setVisible(false);
         remove(ta);
         tablas.remove(ta);
@@ -855,6 +798,14 @@ public class Principal extends JFrame {
         for (Atributo atr : tabla.getTab().getAtributos()) {
             if (atr.getLlaves().contains("(FK)")) {
                 removerRelacion(tabla.getTitle(), atr.getNombre());
+            }
+        }
+    }
+    
+    private void removerCualquierRelacion1A1(VentanaInterna tabla){
+        for (Atributo atr : tabla.getTab().getAtributos()) {
+            if (atr.getLlaves().contains("(FK)")) {
+                removerRelacion1A1(tabla.getTitle(), atr.getNombre());
             }
         }
     }
@@ -874,6 +825,21 @@ public class Principal extends JFrame {
         }
     }
     
+    private void removerRelacion1A1(String tabla, String atr){
+        int i = 0;
+        for (RelacionRelacionada re : relaciones1A1) {
+            if (re.getRelacion1().getTitle().compareToIgnoreCase(tabla.trim()) == 0
+                    && re.getCampo1().compareToIgnoreCase(atr) == 0) {
+                relaciones1A1.remove(re);
+                puntos1A1.removeLast();
+                puntos1A1.removeLast();
+                puntos1A1.removeLast();
+                puntos1A1.removeLast();
+            }
+            i += 4;
+        }
+    }
+    
     private boolean existeAlgunaRelacion(VentanaInterna tabla){
         for (Atributo atr : tabla.getTab().getAtributos()) {
             if (existeRelacion(tabla.getTitle(), atr.getNombre())) {
@@ -882,6 +848,7 @@ public class Principal extends JFrame {
         }
         return false;
     }
+    
     
     private boolean existeAlgunaRelacion1A1(VentanaInterna tabla){
         for (Atributo atr : tabla.getTab().getAtributos()) {
