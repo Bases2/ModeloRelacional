@@ -11,19 +11,19 @@ public class Relacion {
 
     private LinkedList<Atributo> atributos = new LinkedList<>();
 
-    public Atributo buscarAtributo(String nombreMateria) {
+    public Atributo buscarAtributo(String atributo) {
         for (Atributo aa1 : atributos) {
-            if (aa1.getNombre().compareToIgnoreCase(nombreMateria) == 0) {
+            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
                 return aa1;
             }
         }
         return null;
     }
     
-    public int posicionAtributo(String nombreMateria) {
+    public int posicionAtributo(String atributo) {
         int i = 0;
         for (Atributo aa1 : atributos) {
-            if (aa1.getNombre().compareToIgnoreCase(nombreMateria) == 0) {
+            if (aa1.getNombre().compareToIgnoreCase(atributo) == 0) {
                 return i;
             }
         }
