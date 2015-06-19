@@ -78,6 +78,8 @@ public class Principal extends JFrame {
         
         public VentanaInterna(String title, Relacion tab) {
             super(title);
+            
+            System.out.println("hola");
             Object[][] data = {};
             String[] col = {"Nombre"};//, "Apellido"};
             tabla = new JTable();
