@@ -159,12 +159,9 @@ public class Principal extends JFrame {
 
         private void quitarRelaciones(Atributo aAux){
             if (existeRelacion1A1(title, aAux.getNombre())) {
-                RelacionRelacionada r_1A1 = bucarRelacion1A1PorAtributo(title, aAux.getNombre());
-                RelacionRelacionada r_aux = bucarRelacionAuxPorAtributo(title, aAux.getNombre());
-                System.out.println("rela2 =  " + r_aux.getRelacion2().getTitle());
-                System.out.println("rela1 =  " + r_aux.getRelacion1().getTitle());
-                RelacionRelacionada r_nAa = bucarRelacionAux(r_aux.getRelacion2().getTitle(), r_aux.getRelacion1().getTitle());
-                System.out.println("despues ");
+                RelacionRelacionada r_1A1 = buscarRelacion1A1PorAtributo(title, aAux.getNombre());
+                RelacionRelacionada r_aux = buscarRelacionAuxPorAtributo(title, aAux.getNombre());
+                RelacionRelacionada r_nAa = buscarRelacionAux(r_aux.getRelacion2().getTitle(), r_aux.getRelacion1().getTitle());
                 relaciones1A1.remove(r_1A1);
                 relacionesAux.remove(r_aux);
                 relacionesAux.remove(r_nAa);
@@ -297,7 +294,7 @@ public class Principal extends JFrame {
                             }
                             
                             
-                            RelacionRelacionada re = bucarRelacion(tab2, getTitle());
+                            RelacionRelacionada re = buscarRelacion(tab2, getTitle());
                             if (re != null) {
                                 relacionesEntreRelaciones.remove(re);
                                 relacionesAux.add(re);
@@ -418,7 +415,10 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.exit(0);
+                if (JOptionPane.showConfirmDialog(rootPane, "¿Seguro desea cerrar todas las ventanas?", "Cerrar todas las ventanas", 
+                        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    System.exit(0);
+                }
             }
         });
         menuEditar = new JMenu("Editar");
@@ -668,7 +668,7 @@ public class Principal extends JFrame {
             for (Atributo atrib : tabla.tab.getAtributos()) {
                 sR += "\t\"" + atrib.getNombre() + "\" " + atrib.getTipo() ;
                 if (atrib.getLlaves().contains("PK")) {
-                    sR += " UNIQUE";
+                    //sR += " UNIQUE";
                     ll += "\"" + atrib.getNombre() + "\",";
                 }
                 sR += ",\n";
@@ -683,10 +683,31 @@ public class Principal extends JFrame {
         }
         sR += "\n\n";
         for (RelacionRelacionada rela : relacionesEntreRelaciones) {
+            sR += "ALTER TABLE \"" + rela.getRelacion2().getTitle().trim() + "\"";
+            sR += " ADD UNIQUE (\"" + rela.getCampo2() + "\");\n";
+            
             sR += "ALTER TABLE \"" + rela.getRelacion1().getTitle().trim() + "\"";
             sR += " ADD FOREIGN KEY (\"" + rela.getCampo1() + "\"";
             sR += ") REFERENCES \"" + rela.getRelacion2().getTitle().trim() + "\"";
             sR += " (\"" + rela.getCampo2() + "\");\n";
+        }
+        for (int i = 0; i < relaciones1A1.size(); i++) {
+            sR += "ALTER TABLE \"" + relaciones1A1.get(i).getRelacion2().getTitle().trim() + "\"";
+            sR += " ADD UNIQUE (\"" + relaciones1A1.get(i).getCampo2() + "\");\n";
+            
+            sR += "ALTER TABLE \"" + relacionesAux.get(i).getRelacion2().getTitle().trim() + "\"";
+            sR += " ADD UNIQUE (\"" + relacionesAux.get(i).getCampo2() + "\");\n";
+            
+            sR += "ALTER TABLE \"" + relaciones1A1.get(i).getRelacion1().getTitle().trim() + "\"";
+            sR += " ADD FOREIGN KEY (\"" + relaciones1A1.get(i).getCampo1() + "\"";
+            sR += ") REFERENCES \"" + relaciones1A1.get(i).getRelacion2().getTitle().trim() + "\"";
+            sR += " (\"" + relaciones1A1.get(i).getCampo2() + "\");\n";
+            
+            sR += "ALTER TABLE \"" + relacionesAux.get(i).getRelacion1().getTitle().trim() + "\"";
+            sR += " ADD FOREIGN KEY (\"" + relacionesAux.get(i).getCampo1() + "\"";
+            sR += ") REFERENCES \"" + relacionesAux.get(i).getRelacion2().getTitle().trim() + "\"";
+            sR += " (\"" + relacionesAux.get(i).getCampo2() + "\");\n";
+            
         }
         
         return sR;
@@ -809,6 +830,7 @@ public class Principal extends JFrame {
         VentanaInterna ta = buscarTab(tablaA_Elimminar);
         
         if (ta == null) {
+            JOptionPane.showMessageDialog(rootPane, "la tabla " + tablaA_Elimminar + " no existe");
             return ;
         }
         
@@ -818,11 +840,11 @@ public class Principal extends JFrame {
             return ;
         }
         
-        if (existeAlgunaRelacion1A1(ta)) {
-            JOptionPane.showMessageDialog(rootPane, "no puede eliminarse la tabla "
-                    + tablaA_Elimminar + " ya que tiene uno o más campos que son llaves foraneas en una o más tablas");
-            return ;
-        }
+//        if (existeAlgunaRelacion1A1(ta)) {
+//            JOptionPane.showMessageDialog(rootPane, "no puede eliminarse la tabla "
+//                    + tablaA_Elimminar + " ya que tiene uno o más campos que son llaves foraneas en una o más tablas");
+//            return ;
+//        }
         
         removerCualquierRelacion(ta);
         removerCualquierRelacion1A1(ta);
@@ -842,9 +864,7 @@ public class Principal extends JFrame {
     
     private void removerCualquierRelacion1A1(VentanaInterna tabla){
         for (Atributo atr : tabla.getTab().getAtributos()) {
-            if (atr.getLlaves().contains("(FK)")) {
-                removerRelacion1A1(tabla.getTitle(), atr.getNombre());
-            }
+            removerRelacion1A1(tabla.getTitle(), atr.getNombre());
         }
     }
     
@@ -864,17 +884,31 @@ public class Principal extends JFrame {
     }
     
     private void removerRelacion1A1(String tabla, String atr){
-        for (RelacionRelacionada re : relaciones1A1) {
-            if ((re.getRelacion1().getTitle().compareToIgnoreCase(tabla.trim()) == 0
-                    && re.getCampo1().compareToIgnoreCase(atr) == 0)
-                    || (re.getRelacion2().getTitle().compareToIgnoreCase(tabla.trim()) == 0
-                    && re.getCampo2().compareToIgnoreCase(atr) == 0)) {
-                relaciones1A1.remove(re);
-                puntos1A1.removeLast();
-                puntos1A1.removeLast();
-                puntos1A1.removeLast();
-                puntos1A1.removeLast();
+        RelacionRelacionada r_1A1 = buscarRelacion1A1PorAtributo(tabla, atr);
+        RelacionRelacionada r_aux = buscarRelacionAuxPorAtributo(tabla, atr);        
+        if (r_1A1 != null && r_aux != null) {
+            RelacionRelacionada r_nAa = buscarRelacionAux(r_aux.getRelacion2().getTitle(), r_aux.getRelacion1().getTitle());
+            relaciones1A1.remove(r_1A1);
+            relacionesAux.remove(r_aux);
+            relacionesAux.remove(r_nAa);
+            Relacion re = r_aux.getRelacion1().tab;
+            Atributo at =  re.buscarAtributo(r_aux.getCampo1());
+            at.setLlaves(at.getLlaves().substring(0, at.getLlaves().indexOf("(FK)")) 
+                    + at.getLlaves().substring(at.getLlaves().indexOf("(FK)") +4,at.getLlaves().length()));//.replaceAll("(FK)", " "));
+            re = r_nAa.getRelacion1().tab;
+            at =  re.buscarAtributo(r_nAa.getCampo1());
+            at.setLlaves(at.getLlaves().replaceAll("(FK)", " "));
+            puntos1A1.removeLast();
+            puntos1A1.removeLast();
+            puntos1A1.removeLast();
+            puntos1A1.removeLast();
+            refrescarTablas();
             }
+    }
+    
+    private void refrescarTablas(){
+        for (VentanaInterna tabla : tablas) {
+            tabla.RefrescarTabla();
         }
     }
     
@@ -888,6 +922,15 @@ public class Principal extends JFrame {
     }
     
     
+    private boolean existeAlgunaRelacio1An(VentanaInterna tabla){
+        for (Atributo atr : tabla.getTab().getAtributos()) {
+            if (existeRelacion1An(tabla.getTitle(), atr.getNombre())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private boolean existeAlgunaRelacion1A1(VentanaInterna tabla){
         for (Atributo atr : tabla.getTab().getAtributos()) {
             if (existeRelacion1A1(tabla.getTitle(), atr.getNombre())) {
@@ -898,6 +941,16 @@ public class Principal extends JFrame {
     }
     
     private boolean existeRelacion(String tabla, String campo){
+        for (RelacionRelacionada re : relacionesEntreRelaciones) {
+            if (re.getRelacion2().getTitle().compareToIgnoreCase(tabla.trim()) == 0 
+                    && re.getCampo2().compareToIgnoreCase(campo) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean existeRelacion1An(String tabla, String campo){
         for (RelacionRelacionada re : relacionesEntreRelaciones) {
             if (re.getRelacion2().getTitle().compareToIgnoreCase(tabla.trim()) == 0 
                     && re.getCampo2().compareToIgnoreCase(campo) == 0) {
@@ -977,7 +1030,7 @@ public class Principal extends JFrame {
         return null;
     }
     
-    private RelacionRelacionada bucarRelacion(String t1, String t2){
+    private RelacionRelacionada buscarRelacion(String t1, String t2){
         for (RelacionRelacionada re : relacionesEntreRelaciones) {
             if (re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getRelacion2().getTitle().compareToIgnoreCase(t2) == 0) {
                 return re;
@@ -986,7 +1039,7 @@ public class Principal extends JFrame {
         return null;
     }
     
-    private RelacionRelacionada bucarRelacionAux(String t1, String t2){
+    private RelacionRelacionada buscarRelacionAux(String t1, String t2){
         for (RelacionRelacionada re : relacionesAux) {
             if (re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getRelacion2().getTitle().compareToIgnoreCase(t2) == 0) {
                 return re;
@@ -995,7 +1048,7 @@ public class Principal extends JFrame {
         return null;
     }
     
-    private RelacionRelacionada bucarRelacionPorAtributo(String t1, String at){
+    private RelacionRelacionada buscarRelacionPorAtributo(String t1, String at){
         for (RelacionRelacionada re : relacionesEntreRelaciones) {
             if (re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo1().compareToIgnoreCase(at) == 0) {
                 return re;
@@ -1004,16 +1057,17 @@ public class Principal extends JFrame {
         return null;
     }
     
-    private RelacionRelacionada bucarRelacionAuxPorAtributo(String t1, String at){
+    private RelacionRelacionada buscarRelacionAuxPorAtributo(String t1, String at){
         for (RelacionRelacionada re : relacionesAux) {
-            if (re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo1().compareToIgnoreCase(at) == 0) {
+            if ((re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo1().compareToIgnoreCase(at) == 0)
+                    || (re.getRelacion2().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo2().compareToIgnoreCase(at) == 0)) {
                 return re;
             }
         }
         return null;
     }
     
-    private RelacionRelacionada bucarRelacion1A1(String t1, String t2){
+    private RelacionRelacionada buscarRelacion1A1(String t1, String t2){
         for (RelacionRelacionada re : relaciones1A1) {
             if ((re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getRelacion2().getTitle().compareToIgnoreCase(t2) == 0)
                     || (re.getRelacion2().getTitle().compareToIgnoreCase(t1) == 0 && re.getRelacion1().getTitle().compareToIgnoreCase(t2) == 0)) {
@@ -1023,20 +1077,19 @@ public class Principal extends JFrame {
         return null;
     }
     
-    private RelacionRelacionada bucarRelacion1A1PorAtributo(String t1, String at){
+    private RelacionRelacionada buscarRelacion1A1PorAtributo(String t1, String at){
         for (RelacionRelacionada re : relaciones1A1) {
-            if ((re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo1().compareToIgnoreCase(at) == 0)
-                    || (re.getRelacion2().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo2().compareToIgnoreCase(at) == 0)) {
+//            System.out.println("tab1 =  " + re.getRelacion1().getTitle() + ", campo1 =  " + re.getCampo1() 
+//                    + "\ntab2 = " + re.getRelacion2().getTitle() + ", campo2 = " + re.getCampo2() + "\n\n");
+            if (re.getRelacion1().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo1().compareToIgnoreCase(at) == 0)
+                     {
+                return re;
+            }
+            if (re.getRelacion2().getTitle().compareToIgnoreCase(t1) == 0 && re.getCampo2().compareToIgnoreCase(at) == 0) {
                 return re;
             }
         }
         return null;
-    }
-    
-    private void RomoveTab (String reE){
-        VentanaInterna d = buscarTab(reE);
-        tablas.remove(d);
-        
     }
     
     public void Repintar() {
@@ -1162,6 +1215,5 @@ public class Principal extends JFrame {
 
         }
         
-//        tablas.getFirst().componentResized(null);
     }
 }
