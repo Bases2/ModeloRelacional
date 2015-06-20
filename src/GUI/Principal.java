@@ -445,13 +445,16 @@ public class Principal extends JFrame {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                String ta = JOptionPane.showInputDialog("Tabla a la que desea cambiarle el nombre");
+                String ta = JOptionPane.showInputDialog("Tabla a la que desea cambiarle el nombre").toUpperCase();
+                if (ta.isEmpty()) {
+                    return ;
+                }
                 VentanaInterna ven = buscarTab(ta);
                 if (ven == null) {
                     JOptionPane.showMessageDialog(rootPane, "La tabla " + ta + " no existe");
                     return ;
                 }
-                String nnta = JOptionPane.showInputDialog("Nuevo nombre de la tabla " + ta );
+                String nnta = JOptionPane.showInputDialog("Nuevo nombre de la tabla " + ta ).toUpperCase();
                 if (buscarTab(nnta) != null) {
                     JOptionPane.showMessageDialog(rootPane, "Ya existe una tabla con el nombre " + nnta);
                     return ;
